@@ -1,28 +1,15 @@
 module Main where
 
 import Control.Arrow
-import Data.Monoid
+import Data.Semigroup hiding (diff)
 import Data.List
 import System.IO
 
-newtype Maximum = Maximum Int
-  deriving (Bounded, Eq, Ord, Show)
-newtype Minimum = Minimum Int
-  deriving (Bounded, Eq, Ord, Show)
-
-instance Monoid Maximum where
-  mappend = max
-  mempty  = minBound
-
-instance Monoid Minimum where
-  mappend = min
-  mempty  = maxBound
-
-diff :: Maximum -> Minimum -> Int
-diff (Maximum a) (Minimum b) = a - b
+diff :: Max Int -> Min Int -> Int
+diff a b = (getMax a) - (getMin b)
 
 solveOne :: String -> Int
-solveOne = sum . map (uncurry diff . foldMap (Maximum &&& Minimum) . map read . words) . lines
+solveOne = sum . map (uncurry diff . foldMap (Max &&& Min) . map read . words) . lines
 
 solveTwo :: String -> Int
 solveTwo = sum . map (go . sort . map read . words) . lines
