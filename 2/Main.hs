@@ -1,15 +1,12 @@
 module Main where
 
 import Control.Arrow
-import Data.Semigroup hiding (diff)
+import Data.Semigroup
 import Data.List
 import System.IO
 
-diff :: Max Int -> Min Int -> Int
-diff a b = (getMax a) - (getMin b)
-
 solveOne :: String -> Int
-solveOne = sum . map (uncurry diff . foldMap (Max &&& Min) . map read . words) . lines
+solveOne = sum . map (uncurry (-) . (getMax *** getMin) . foldMap (Max &&& Min) . map read . words) . lines
 
 solveTwo :: String -> Int
 solveTwo = sum . map (go . sort . map read . words) . lines
