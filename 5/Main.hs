@@ -24,6 +24,5 @@ run n i v = case v  V.!? i of
       | otherwise = a + 1
 
 main :: IO ()
-main = do
-  n <- run 0 0 . V.fromList . map read . lines <$> readFile "input.txt"
-  print n
+main =
+  print =<< run 0 0 . V.fromList . map read . lines <$> readFile "input.txt"
