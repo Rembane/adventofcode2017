@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module Main where
 
 import Data.List
@@ -5,29 +7,38 @@ import Data.List
 puzzleInput :: Int
 puzzleInput = 335
 
-newtype Buffer a = Buffer ([a], [a])
+data Buffer a = Buffer !Int ![a] ![a]
   deriving Show
 
+getLength :: Buffer a -> Int
+getLength (Buffer l _ _) = l
+
 binsert :: a -> Buffer a -> Buffer a
-binsert x (Buffer (p, n)) = Buffer (x:p, n)
+binsert x (Buffer len p n) = Buffer (len + 1) (x:p) n
 
 stepRight :: Buffer a -> Buffer a
-stepRight (Buffer (ps, []))     = stepRight (Buffer ([], reverse ps))
-stepRight (Buffer (ps, (x:xs))) =            Buffer (x:ps, xs)
+stepRight (Buffer l ps [])     = stepRight (Buffer l [] (reverse ps))
+stepRight (Buffer l ps (x:xs)) =            Buffer l (x:ps) xs
 
-stepMany :: Int -> Buffer Int -> Buffer Int
-stepMany 0 b = b
-stepMany n b = stepMany (n-1) (stepRight b)
-
-insertOne :: Int -> Int -> Buffer Int -> Buffer Int
-insertOne n x b = binsert x (stepMany n b)
+stepMany :: Int -> Buffer a -> Buffer a
+stepMany n b = foldl' (\b' _ -> stepRight b') b [1..mod n (getLength b)]
 
 insertMany :: Int -> [Int] -> Buffer Int -> Buffer Int
-insertMany n xs b = foldl' (flip $ insertOne n) b xs
+insertMany n xs b = foldl' (\b' x -> binsert x (stepMany n b')) b xs
 
 solveOne :: IO ()
-solveOne = let (Buffer (_, x:xs)) = insertMany 335 [1..2017] (Buffer ([],  [0]))
+solveOne = let (Buffer _ _ (x:xs)) = insertMany 335 [1..2017] (Buffer 1 [] [0])
             in print x
 
+loadTest :: IO ()
+loadTest = let (Buffer _ _ (x:xs)) = insertMany 335 [1..100000] (Buffer 1 [] [0])
+            in print x
+
+solveTwo :: IO ()
+solveTwo = let (Buffer _ a b) = insertMany 335 [1..50000000] (Buffer 1 [] [0])
+               f = drop 1 . dropWhile (/= 0)
+            in print $ head $ (f b) ++ (f $ reverse a)
+
 main :: IO ()
-main = solveOne
+main = loadTest
+-- solveOne -- >> solveTwo
