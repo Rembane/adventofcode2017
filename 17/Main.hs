@@ -2,7 +2,8 @@
 
 module Main where
 
-import Data.List
+import           Data.List
+import qualified Data.Vector.Unboxed as V
 
 puzzleInput :: Int
 puzzleInput = 335
@@ -39,6 +40,35 @@ solveTwo = let (Buffer _ a b) = insertMany 335 [1..50000000] (Buffer 1 [] [0])
                f = drop 1 . dropWhile (/= 0)
             in print $ head $ (f b) ++ (f $ reverse a)
 
+nextIndex :: Int -> Int -> Int -> Int
+nextIndex input len idx = (mod (idx + input) len) + 1
+
+insertValue :: Int -> Int -> Int -> V.Vector Int -> (Int, V.Vector Int)
+insertValue input currentIdx value vector =
+  let idx'     = nextIndex input (V.length vector) currentIdx
+      (v1, v2) = V.splitAt idx' vector
+   in (idx', V.force $ V.concat [v1, (V.singleton value), v2])
+
+insertManyValues :: Int -> Int -> [Int] -> V.Vector Int -> V.Vector Int
+insertManyValues _     _          []     vector = vector
+insertManyValues input currentIdx (x:xs) vector =
+  let (idx', vector') = insertValue input currentIdx x vector
+   in insertManyValues input idx' xs vector'
+
+solveOne' :: IO ()
+solveOne' =
+  let v = insertManyValues puzzleInput 0 [1..2017] (V.singleton 0)
+   in case V.elemIndex 2017 v of
+        Nothing -> putStrLn "Couldn't find 2017."
+        Just i  -> print (v V.! (i + 1))
+
+solveTwo' :: IO ()
+solveTwo' =
+  let v = insertManyValues puzzleInput 0 [1..50000000] (V.singleton 0)
+   in case V.elemIndex 0 v of
+        Nothing -> putStrLn "Couldn't find 0."
+        Just i  -> print (v V.! 1)
+
 main :: IO ()
-main = loadTest
+main = solveTwo'
 -- solveOne -- >> solveTwo
