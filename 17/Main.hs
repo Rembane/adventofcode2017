@@ -3,6 +3,7 @@
 module Main where
 
 import           Data.List
+import           Debug.Trace
 import qualified Data.Vector.Unboxed as V
 
 puzzleInput :: Int
@@ -35,40 +36,41 @@ loadTest :: IO ()
 loadTest = let (Buffer _ _ (x:xs)) = insertMany 335 [1..100000] (Buffer 1 [] [0])
             in print x
 
-solveTwo :: IO ()
-solveTwo = let (Buffer _ a b) = insertMany 335 [1..50000000] (Buffer 1 [] [0])
-               f = drop 1 . dropWhile (/= 0)
-            in print $ head $ (f b) ++ (f $ reverse a)
-
-nextIndex :: Int -> Int -> Int -> Int
-nextIndex input len idx = (mod (idx + input) len) + 1
-
-insertValue :: Int -> Int -> Int -> V.Vector Int -> (Int, V.Vector Int)
-insertValue input currentIdx value vector =
-  let idx'     = nextIndex input (V.length vector) currentIdx
-      (v1, v2) = V.splitAt idx' vector
-   in (idx', V.force $ V.concat [v1, (V.singleton value), v2])
-
-insertManyValues :: Int -> Int -> [Int] -> V.Vector Int -> V.Vector Int
-insertManyValues _     _          []     vector = vector
-insertManyValues input currentIdx (x:xs) vector =
-  let (idx', vector') = insertValue input currentIdx x vector
-   in insertManyValues input idx' xs vector'
-
 solveOne' :: IO ()
 solveOne' =
-  let v = insertManyValues puzzleInput 0 [1..2017] (V.singleton 0)
-   in case V.elemIndex 2017 v of
-        Nothing -> putStrLn "Couldn't find 2017."
-        Just i  -> print (v V.! (i + 1))
+  case V.elemIndex 2017 v of
+    Nothing -> putStrLn "Couldn't find 2017."
+    Just i  -> print (v V.! (i + 1))
+  where
+    v = insertManyValues puzzleInput 0 [1..2017] (V.singleton 0)
+
+    nextIndex :: Int -> Int -> Int -> Int
+    nextIndex input len idx = (mod (idx + input) len) + 1
+
+    insertValue :: Int -> Int -> Int -> V.Vector Int -> (Int, V.Vector Int)
+    insertValue input currentIdx value vector =
+      let idx'     = nextIndex input (V.length vector) currentIdx
+          (v1, v2) = V.splitAt idx' vector
+       in (idx', V.force $ V.concat [v1, (V.singleton value), v2])
+
+    insertManyValues :: Int -> Int -> [Int] -> V.Vector Int -> V.Vector Int
+    insertManyValues _     _          []     vector = vector
+    insertManyValues input currentIdx (x:xs) vector =
+      let (idx', vector') = insertValue input currentIdx x vector
+       in insertManyValues input idx' xs vector'
 
 solveTwo' :: IO ()
-solveTwo' =
-  let v = insertManyValues puzzleInput 0 [1..50000000] (V.singleton 0)
-   in case V.elemIndex 0 v of
-        Nothing -> putStrLn "Couldn't find 0."
-        Just i  -> print (v V.! 1)
+solveTwo' = print $ go 0 1
+  where
+    go :: Int -> Int -> [Int]
+    go _   50000001 = []
+    go idx len      =
+      case idx' of
+        1 -> len : step
+        _ ->       step
+      where
+        idx' = (mod (idx + puzzleInput) len) + 1
+        step = go idx' (len + 1)
 
 main :: IO ()
-main = solveTwo'
--- solveOne -- >> solveTwo
+main = solveOne >> solveTwo'
